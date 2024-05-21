@@ -4,6 +4,8 @@ const client = new pg.Client(
 );
 const uuid = require('uuid');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const JWT = process.env.JWT || 'secret_key'
 
 const createTables = async () => {
   const SQL = /* sql */ `
@@ -86,11 +88,159 @@ const createComment = async ({ txt, user_id, review_id }) => {
   return response.rows[0];
 };
 
+const authenticate = async({ username, password })=> {
+  const SQL = /* sql */ `
+    SELECT id, password
+    FROM users
+    WHERE username = $1
+  `;
+  const response = await client.query(SQL, [ username ]);
+  if(!response.rows.length || (await bcrypt.compare(password, response.rows[0].password)) === false){
+    const error = Error('not authorized');
+    error.status = 401;
+    throw error;
+  }
+
+  const token = await jwt.sign({id: response.rows[0].id}, JWT);
+  console.log(token);
+  return { token };
+};
+
+const findUserWithToken = async(token)=> {
+  let id;
+  try {
+    const payload = await jwt.verify(token, JWT);
+    console.log('payload', payload);
+    id = payload.id;
+  } catch (err) {
+    const error = Error('not authorized');
+    error.status = 401;
+    throw error;
+  }
+  console.log(id);
+  const SQL = /* sql */`
+    SELECT id, username FROM users WHERE id=$1;
+  `;
+  const response = await client.query(SQL, [id]);
+  if(!response.rows.length){
+    const error = Error('not authorized');
+    error.status = 401;
+    throw error;
+  }
+  return response.rows[0];
+};
+
+const fetchUsers = async()=> {
+  const SQL = /* sql */ `
+    SELECT id, username FROM users;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+};
+
+const fetchItems = async()=> {
+  const SQL = /* sql */ `
+    SELECT * FROM items;
+  `;
+  const response = await client.query(SQL);
+  return response.rows;
+};
+
+const fetchItemById = async( item_id )=> {
+  const SQL = /* sql */ `
+    SELECT * FROM items where id = $1;
+  `;
+  const response = await client.query(SQL, [item_id]);
+  return response.rows;
+};
+
+const fetchReviews = async( item_id )=> {
+  const SQL = /* sql */ `
+    SELECT * FROM reviews WHERE item_id = $1;
+  `;
+  const response = await client.query(SQL, [item_id]);
+  return response.rows;
+};
+
+const fetchUserReviews = async( user_id )=> {
+  const SQL = /* sql */ `
+    SELECT * FROM reviews WHERE user_id = $1;
+  `;
+  const response = await client.query(SQL, [user_id]);
+  return response.rows;
+};
+
+const fetchSingleReview = async( review_id, item_id ) => {
+  const SQL = /* sql */ `
+    SELECT * FROM reviews where id = $1 and item_id = $2;
+  `;
+  const response = await client.query(SQL, [review_id, item_id]);
+  return response.rows;
+}
+
+const deleteUserReview = async({ user_id, id }) => {
+  const SQL = /* sql */ `
+    DELETE FROM reviews WHERE user_id = $1 and id = $2
+  `;
+  const deleteCommentsQuery = /* sql */ `
+    DELETE FROM comments 
+    WHERE review_id = $1
+  `;
+  await client.query(deleteCommentsQuery, [id]);
+  await client.query(SQL, [user_id, id]);
+};
+
+const updateUserReview = async({ user_id, review_id, txt, rating }) => {
+  const SQL = /* sql */`
+    UPDATE reviews
+    SET txt = $1, rating = $2
+    WHERE id = $3 AND user_id = $4
+  `;
+  await client.query(SQL, [txt, rating, review_id, user_id]);
+};
+
+const fetchUserComments = async( user_id )=> {
+  const SQL = /* sql */ `
+    SELECT * FROM comments WHERE user_id = $1;
+  `;
+  const response = await client.query(SQL, [user_id]);
+  return response.rows;
+};
+
+const deleteUserComment = async({ user_id, comment_id }) => {
+  const SQL = /* sql */ `
+    DELETE FROM comments WHERE user_id = $1 and id = $2
+  `;
+  await client.query(SQL, [user_id, comment_id]);
+};
+
+const updateUserComment = async({ user_id, comment_id, txt }) => {
+  const SQL = /* sql */`
+    UPDATE comments
+    SET txt = $1
+    WHERE id = $2 AND user_id = $3
+  `;
+  await client.query(SQL, [txt, comment_id, user_id]);
+};
+
 module.exports = {
   client,
   createTables,
   createUser,
   createItem,
   createReview,
-  createComment
+  createComment,
+  authenticate,
+  findUserWithToken,
+  fetchUsers,
+  fetchItems,
+  fetchItemById,
+  fetchReviews,
+  fetchUserReviews,
+  fetchSingleReview,
+  fetchUserComments,
+  deleteUserReview,
+  updateUserReview,
+  deleteUserComment,
+  updateUserComment
 };
