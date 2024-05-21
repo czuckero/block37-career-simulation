@@ -28,7 +28,7 @@ const createTables = async () => {
 
     CREATE TABLE reviews(
       id uuid PRIMARY KEY,
-      txt VARCHAR(255),
+      text VARCHAR(1000),
       rating INTEGER,
       item_id UUID REFERENCES items(id) NOT NULL,
       user_id UUID REFERENCES users(id) NOT NULL,
@@ -37,7 +37,7 @@ const createTables = async () => {
 
     CREATE TABLE comments(
       id uuid PRIMARY KEY,
-      txt VARCHAR(255),
+      text VARCHAR(1000),
       review_id UUID REFERENCES reviews(id) NOT NULL,
       user_id UUID  REFERENCES users(id) NOT NULL,
       CONSTRAINT unique_review_id_and_user_id UNIQUE (user_id, review_id)
@@ -66,25 +66,25 @@ const createItem = async ({ name, description }) => {
   return response.rows[0];
 };
 
-const createReview = async ({ txt, rating, user_id, item_id }) => {
+const createReview = async ({ text, rating, user_id, item_id }) => {
   const SQL = /* sql */ `
-    INSERT INTO reviews(id, txt, rating, user_id, item_id)
+    INSERT INTO reviews(id, text, rating, user_id, item_id)
     VALUES($1, $2, $3, $4, $5)
     RETURNING *
   `;
   const response = await client.query(SQL, [
-    uuid.v4(), txt, rating, user_id, item_id
+    uuid.v4(), text, rating, user_id, item_id
   ]);
   return response.rows[0];
 };
 
-const createComment = async ({ txt, user_id, review_id }) => {
+const createComment = async ({ text, user_id, review_id }) => {
   const SQL = /* sql */ `
-    INSERT INTO comments(id, txt, user_id, review_id)
+    INSERT INTO comments(id, text, user_id, review_id)
     VALUES($1, $2, $3, $4)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), txt, user_id, review_id]);
+  const response = await client.query(SQL, [uuid.v4(), text, user_id, review_id]);
   return response.rows[0];
 };
 
@@ -190,13 +190,13 @@ const deleteUserReview = async({ user_id, id }) => {
   await client.query(SQL, [user_id, id]);
 };
 
-const updateUserReview = async({ user_id, review_id, txt, rating }) => {
+const updateUserReview = async({ user_id, review_id, text, rating }) => {
   const SQL = /* sql */`
     UPDATE reviews
-    SET txt = $1, rating = $2
+    SET text = $1, rating = $2
     WHERE id = $3 AND user_id = $4
   `;
-  await client.query(SQL, [txt, rating, review_id, user_id]);
+  await client.query(SQL, [text, rating, review_id, user_id]);
 };
 
 const fetchUserComments = async( user_id )=> {
@@ -214,13 +214,13 @@ const deleteUserComment = async({ user_id, comment_id }) => {
   await client.query(SQL, [user_id, comment_id]);
 };
 
-const updateUserComment = async({ user_id, comment_id, txt }) => {
+const updateUserComment = async({ user_id, comment_id, text }) => {
   const SQL = /* sql */`
     UPDATE comments
-    SET txt = $1
+    SET text = $1
     WHERE id = $2 AND user_id = $3
   `;
-  await client.query(SQL, [txt, comment_id, user_id]);
+  await client.query(SQL, [text, comment_id, user_id]);
 };
 
 module.exports = {

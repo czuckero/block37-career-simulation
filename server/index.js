@@ -96,6 +96,19 @@ app.get('/api/items/:itemId/reviews/:id', async(req, res, next) => {
   }
 });
 
+app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next) => {
+  try {
+    res.status(201).send(await createReview({
+      text: req.body.text, 
+      rating: req.body.rating,
+      user_id: req.user.id,
+      item_id: req.params.itemId
+    }))
+  } catch (error) {
+    next();
+  };
+});
+
 const init = async () => {
   await client.connect();
   console.log('connected to express server');
@@ -120,21 +133,21 @@ const init = async () => {
   console.log(await fetchItemById(milk.id));
 
   const [review1, review2]= await Promise.all([
-    createReview({txt: "not worth the money", rating: 1, user_id: christian.id, item_id: shampoo.id}),
-    createReview({txt: "it's surprisingly good", rating: 4, user_id: william.id, item_id: shampoo.id})
+    createReview({text: "not worth the money", rating: 1, user_id: christian.id, item_id: shampoo.id}),
+    createReview({text: "it's surprisingly good", rating: 4, user_id: william.id, item_id: shampoo.id})
   ])
-  const comment = await createComment({txt: "really? i thought it was good shampoo", user_id: cris.id, review_id: review1.id})
+  const comment = await createComment({text: "really? i thought it was good shampoo", user_id: cris.id, review_id: review1.id})
 
   console.log(await fetchReviews(shampoo.id));
   console.log(await fetchUserReviews(christian.id));
   console.log(await fetchSingleReview(review1.id));
   console.log(await fetchUserComments(cris.id));
 
-  // await updateUserReview({user_id: christian.id, review_id: review.id, txt: 'changed my mind', rating: 5, })
-  // await updateUserComment({user_id: cris.id, comment_id: comment.id, txt: 'actually no ur sooo right'})
+  // await updateUserReview({user_id: christian.id, review_id: review1.id, text: 'changed my mind', rating: 5, })
+  // await updateUserComment({user_id: cris.id, comment_id: comment.id, text: 'actually no ur sooo right'})
 
   // await deleteUserComment({user_id: cris.id, comment_id: comment.id})
-  // await deleteUserReview({user_id: christian.id, id: review.id});
+  // await deleteUserReview({user_id: christian.id, id: review1.id});
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`listening on port ${port}`));
