@@ -78,13 +78,13 @@ const createReview = async ({ text, rating, user_id, item_id }) => {
   return response.rows[0];
 };
 
-const createComment = async ({ text, user_id, review_id }) => {
+const createComment = async ({ text, user_id, reviewId }) => {
   const SQL = /* sql */ `
     INSERT INTO comments(id, text, user_id, review_id)
     VALUES($1, $2, $3, $4)
     RETURNING *
   `;
-  const response = await client.query(SQL, [uuid.v4(), text, user_id, review_id]);
+  const response = await client.query(SQL, [uuid.v4(), text, user_id, reviewId]);
   return response.rows[0];
 };
 

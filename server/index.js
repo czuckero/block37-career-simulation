@@ -103,10 +103,110 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next) => {
       rating: req.body.rating,
       user_id: req.user.id,
       item_id: req.params.itemId
-    }))
+    }));
   } catch (error) {
     next();
   };
+});
+
+app.get('/api/reviews/me', isLoggedIn, async(req, res, next) => {
+  try {
+    res.send(await fetchUserReviews(req.user.id));
+  } catch (error) {
+    next();
+  }
+});
+
+app.put('/api/users/:userId/reviews/:id', isLoggedIn, async(req, res, next) => {
+  try {
+    if(req.params.userId !== req.user.id) {
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error
+    };
+
+    res.send(await updateUserReview({
+      user_id: req.user.id,
+      review_id: req.params.id,
+      text: req.body.text,
+      rating: req.body.rating
+    }));
+  } catch (error) {
+    next();
+  }
+});
+
+app.delete('/api/users/:userId/reviews/:id', isLoggedIn, async(req, res, next) => {
+  try {
+    if(req.params.userId !== req.user.id) {
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error
+    };
+    await deleteUserReview({
+      user_id: req.user.id,
+      id: req.params.id
+    });
+    res.sendStatus(204);
+  } catch (error) {
+    next();
+  }
+});
+
+app.post('/api/items/:itemId/reviews/:id/comments', isLoggedIn, async(req, res, next) => {
+  try {
+
+    res.status(201).send(await createComment({
+      text: req.body.text, 
+      user_id: req.user.id,
+      reviewId: req.params.id
+    }));
+  } catch (error) {
+    next();
+  };
+});
+
+app.get('/api/comments/me', isLoggedIn, async(req, res, next) => {
+  try {
+    res.send(await fetchUserComments(req.user.id))
+  } catch (error) {
+    next();
+  }
+});
+
+app.put('/api/users/:userId/comments/:id', isLoggedIn, async(req, res, next) => {
+  try {
+    if(req.params.userId !== req.user.id) {
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error
+    };
+
+    res.send(await updateUserComment({
+      user_id: req.user.id,
+      comment_id: req.params.id,
+      text: req.body.text,
+    }));
+  } catch (error) {
+    next();
+  }
+});
+
+app.delete('/api/users/:userId/comments/:id', isLoggedIn, async(req, res, next) => {
+  try {
+    if(req.params.userId !== req.user.id) {
+      const error = Error('not authorized');
+      error.status = 401;
+      throw error
+    };
+    await deleteUserComment({
+      user_id: req.user.id,
+      comment_id: req.params.id
+    });
+    res.sendStatus(204);
+  } catch (error) {
+    next();
+  }
 });
 
 const init = async () => {
@@ -136,7 +236,7 @@ const init = async () => {
     createReview({text: "not worth the money", rating: 1, user_id: christian.id, item_id: shampoo.id}),
     createReview({text: "it's surprisingly good", rating: 4, user_id: william.id, item_id: shampoo.id})
   ])
-  const comment = await createComment({text: "really? i thought it was good shampoo", user_id: cris.id, review_id: review1.id})
+  const comment = await createComment({text: "really? i thought it was good shampoo", user_id: cris.id, reviewId: review1.id})
 
   console.log(await fetchReviews(shampoo.id));
   console.log(await fetchUserReviews(christian.id));
