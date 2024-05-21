@@ -35,6 +35,7 @@ const isLoggedIn = async(req, res, next) => {
   }
 };
 
+// Fetches all items
 app.get('/api/items', async(req, res, next) => {
   try {
     res.send(await fetchItems());
@@ -43,6 +44,7 @@ app.get('/api/items', async(req, res, next) => {
   }
 });
 
+// Fetches a single item by id
 app.get('/api/items/:id', async(req, res, next) => {
   try {
     res.send(await fetchItemById(req.params.id));
@@ -51,6 +53,7 @@ app.get('/api/items/:id', async(req, res, next) => {
   }
 });
 
+// Registers a new user
 app.post('/api/auth/register', async(req, res, next) => {
   try {
     res.status(201).send(
@@ -64,6 +67,7 @@ app.post('/api/auth/register', async(req, res, next) => {
   }
 });
 
+// Authenticates username and password that was registered
 app.post('/api/auth/login', async(req, res, next) => {
   try {
     res.send(await authenticate(req.body));
@@ -72,6 +76,7 @@ app.post('/api/auth/login', async(req, res, next) => {
   }
 });
 
+// Fetches user data
 app.get('/api/auth/me', isLoggedIn, async(req, res, next) => {
   try {
     res.send(req.user);
@@ -80,6 +85,7 @@ app.get('/api/auth/me', isLoggedIn, async(req, res, next) => {
   }
 });
 
+// Fetches all reviews on a specific item
 app.get('/api/items/:id/reviews', async(req, res, next) => {
   try {
     res.send(await fetchReviews(req.params.id));
@@ -88,6 +94,7 @@ app.get('/api/items/:id/reviews', async(req, res, next) => {
   }
 });
 
+// Fetches a specific review on an item based on the id
 app.get('/api/items/:itemId/reviews/:id', async(req, res, next) => {
   try {
     res.send(await fetchSingleReview(req.params.id, req.params.itemId))
@@ -96,6 +103,7 @@ app.get('/api/items/:itemId/reviews/:id', async(req, res, next) => {
   }
 });
 
+// Creates a review
 app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next) => {
   try {
     res.status(201).send(await createReview({
@@ -109,6 +117,7 @@ app.post('/api/items/:itemId/reviews', isLoggedIn, async(req, res, next) => {
   };
 });
 
+// Fetches all of a specific user's reviews
 app.get('/api/reviews/me', isLoggedIn, async(req, res, next) => {
   try {
     res.send(await fetchUserReviews(req.user.id));
@@ -117,6 +126,7 @@ app.get('/api/reviews/me', isLoggedIn, async(req, res, next) => {
   }
 });
 
+// Updates specific user's review if they are logged in
 app.put('/api/users/:userId/reviews/:id', isLoggedIn, async(req, res, next) => {
   try {
     if(req.params.userId !== req.user.id) {
@@ -136,6 +146,7 @@ app.put('/api/users/:userId/reviews/:id', isLoggedIn, async(req, res, next) => {
   }
 });
 
+// Deletes specific user's review
 app.delete('/api/users/:userId/reviews/:id', isLoggedIn, async(req, res, next) => {
   try {
     if(req.params.userId !== req.user.id) {
@@ -153,6 +164,7 @@ app.delete('/api/users/:userId/reviews/:id', isLoggedIn, async(req, res, next) =
   }
 });
 
+// Creates a comment on a reviewed item (not functioning, had trouble getting it to work)
 app.post('/api/items/:itemId/reviews/:id/comments', isLoggedIn, async(req, res, next) => {
   try {
 
@@ -166,6 +178,7 @@ app.post('/api/items/:itemId/reviews/:id/comments', isLoggedIn, async(req, res, 
   };
 });
 
+// Fetches all of a specific user's comments
 app.get('/api/comments/me', isLoggedIn, async(req, res, next) => {
   try {
     res.send(await fetchUserComments(req.user.id))
@@ -174,6 +187,7 @@ app.get('/api/comments/me', isLoggedIn, async(req, res, next) => {
   }
 });
 
+// Updates a user's comment
 app.put('/api/users/:userId/comments/:id', isLoggedIn, async(req, res, next) => {
   try {
     if(req.params.userId !== req.user.id) {
@@ -192,6 +206,7 @@ app.put('/api/users/:userId/comments/:id', isLoggedIn, async(req, res, next) => 
   }
 });
 
+// Deletes a user's comment
 app.delete('/api/users/:userId/comments/:id', isLoggedIn, async(req, res, next) => {
   try {
     if(req.params.userId !== req.user.id) {
